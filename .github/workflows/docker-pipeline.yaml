@@ -10,7 +10,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: xashy-app
   IMAGE_TAG: latest
-  DOCKERHUB_IMAGE: gisele/xashy-webapp:latest
+  DOCKERHUB_IMAGE: xashy/xashy-webapp:latest
 
 permissions:
   id-token: write
