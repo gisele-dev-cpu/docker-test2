@@ -45,6 +45,7 @@ jobs:
           exit-code: '0'
           severity: CRITICAL,HIGH
           ignore-unfixed: true
+          output: trivy-report.json
 
       # Step 5: Authenticate to AWS
       - name: Configure AWS credentials
