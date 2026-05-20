@@ -38,7 +38,7 @@ jobs:
 
       # Step 4: Scan image
       - name: Security scan image with Trivy
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aaquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.DOCKERHUB_IMAGE }}
           format: table
