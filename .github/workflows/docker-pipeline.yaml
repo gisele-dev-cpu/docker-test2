@@ -1,1 +1,69 @@
+name: Build and Push Docker Image to ECR
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: xashy-app
+  IMAGE_TAG: latest
+  DOCKERHUB_IMAGE: gisele/xashy-webapp:latest
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  scan-and-promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # Step 2: Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Step 3: Pull image
+      - name: Pull image from Docker Hub
+        run: docker pull $DOCKERHUB_IMAGE
+
+      # Step 4: Scan image
+      - name: Security scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.DOCKERHUB_IMAGE }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      # Step 5: Authenticate to AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 6: Login to ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 7: Retag image
+      - name: Retag image for ECR
+        run: |
+          docker tag $DOCKERHUB_IMAGE \
+          276291856031.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      # Step 8: Push to ECR
+      - name: Push image to ECR
+        run: |
+          docker push 276291856031.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
